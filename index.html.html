@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jeu de français – 3ème année primaire</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #f0f7ff;
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 1rem;
+  }
+  #app {
+    width: 100%;
+    max-width: 480px;
+    padding-top: 0.5rem;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 1.25rem;
+  }
+  .header .logo {
+    font-size: 42px;
+    margin-bottom: 6px;
+  }
+  .header h1 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1a3a6b;
+  }
+  .header p {
+    font-size: 13px;
+    color: #5a7aaa;
+    margin-top: 2px;
+  }
+
+  /* Screens */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* Cards */
+  .card {
+    background: #fff;
+    border-radius: 18px;
+    padding: 1.25rem 1.25rem 1rem;
+    box-shadow: 0 2px 12px rgba(30,80,180,0.08);
+    margin-bottom: 1rem;
+  }
+
+  /* Start screen */
+  .section-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #e8f0fe;
+    color: #1a3a6b;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 20px;
+    padding: 5px 12px;
+    margin-bottom: 10px;
+  }
+  .section-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid #eef2ff;
+    font-size: 14px;
+    color: #2c3e6b;
+  }
+  .section-item:last-child { border-bottom: none; }
+  .section-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .icon-blue { background: #dbeafe; }
+  .icon-green { background: #d1fae5; }
+
+  .start-btn {
+    width: 100%;
+    background: #1a3a6b;
+    color: #fff;
+    border: none;
+    border-radius: 14px;
+    padding: 15px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 0.75rem;
+    letter-spacing: 0.3px;
+    transition: background 0.15s, transform 0.1s;
+  }
+  .start-btn:hover { background: #142e5a; }
+  .start-btn:active { transform: scale(0.98); }
+
+  /* Game screen */
+  .progress-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 1rem;
+  }
+  .progress-bar {
+    flex: 1;
+    height: 8px;
+    background: #dbeafe;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 8px;
+    background: linear-gradient(90deg, #3b82f6, #1a3a6b);
+    border-radius: 4px;
+    transition: width 0.4s ease;
+  }
+  .q-count {
+    font-size: 12px;
+    font-weight: 700;
+    color: #5a7aaa;
+    white-space: nowrap;
+  }
+  .theme-badge {
+    display: inline-block;
+    background: #e8f0fe;
+    color: #1a3a6b;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 20px;
+    padding: 3px 10px;
+    margin-bottom: 10px;
+  }
+  .question-text {
+    font-size: 19px;
+    font-weight: 600;
+    color: #1a2a50;
+    line-height: 1.6;
+    margin-bottom: 1.25rem;
+  }
+  .blank {
+    display: inline-block;
+    min-width: 90px;
+    border-bottom: 3px solid #3b82f6;
+    color: #1a3a6b;
+    text-align: center;
+    padding: 0 6px 2px;
+    font-weight: 700;
+  }
+  .options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 1rem;
+  }
+  .opt-btn {
+    background: #f8faff;
+    border: 2px solid #dbeafe;
+    border-radius: 12px;
+    padding: 13px 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    color: #1a3a6b;
+    transition: background 0.15s, border-color 0.15s, transform 0.1s;
+  }
+  .opt-btn:hover:not(:disabled) { background: #dbeafe; border-color: #93c5fd; }
+  .opt-btn:active:not(:disabled) { transform: scale(0.97); }
+  .opt-btn.correct { background: #d1fae5; border-color: #22c55e; color: #14532d; }
+  .opt-btn.wrong   { background: #fee2e2; border-color: #ef4444; color: #7f1d1d; }
+  .opt-btn:disabled { cursor: default; }
+
+  .feedback {
+    display: none;
+    border-radius: 12px;
+    padding: 11px 14px;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    line-height: 1.5;
+  }
+  .feedback.ok { background: #d1fae5; color: #166534; display: block; }
+  .feedback.ko { background: #fee2e2; color: #991b1b; display: block; }
+
+  .next-btn {
+    width: 100%;
+    background: #1a3a6b;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 13px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    display: none;
+    transition: background 0.15s;
+  }
+  .next-btn:hover { background: #142e5a; }
+
+  /* Result screen */
+  .result-header {
+    text-align: center;
+    padding: 1rem 0 0.5rem;
+  }
+  .result-emoji { font-size: 52px; margin-bottom: 6px; }
+  .result-title { font-size: 22px; font-weight: 700; color: #1a3a6b; }
+  .score-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin: 1rem 0;
+  }
+  .score-big {
+    font-size: 52px;
+    font-weight: 800;
+    color: #1a3a6b;
+    line-height: 1;
+  }
+  .score-total {
+    font-size: 22px;
+    font-weight: 600;
+    color: #5a7aaa;
+    align-self: flex-end;
+    padding-bottom: 8px;
+  }
+  .result-msg {
+    text-align: center;
+    font-size: 14px;
+    color: #5a7aaa;
+    margin-bottom: 1rem;
+  }
+  .review-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #5a7aaa;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+  .review-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 0;
+    border-bottom: 1px solid #eef2ff;
+    font-size: 13px;
+    color: #2c3e6b;
+  }
+  .review-item:last-child { border-bottom: none; }
+  .review-dot {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    flex-shrink: 0;
+    font-weight: 700;
+  }
+  .dot-ok  { background: #d1fae5; color: #166534; }
+  .dot-ko  { background: #fee2e2; color: #991b1b; }
+
+  .restart-btn {
+    width: 100%;
+    background: #1a3a6b;
+    color: #fff;
+    border: none;
+    border-radius: 14px;
+    padding: 15px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 0.75rem;
+    transition: background 0.15s;
+  }
+  .restart-btn:hover { background: #142e5a; }
+
+  .footer-note {
+    text-align: center;
+    font-size: 11px;
+    color: #9ab0cc;
+    margin-top: 1rem;
+    padding-bottom: 1rem;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div class="header">
+    <div class="logo">📚</div>
+    <h1>Exercices de français</h1>
+    <p>3ème année primaire</p>
+  </div>
+
+  <!-- START SCREEN -->
+  <div class="screen active" id="start-screen">
+    <div class="card">
+      <div class="section-badge">📋 2 exercices • 10 questions</div>
+      <div class="section-item">
+        <div class="section-icon icon-blue">🤕</div>
+        <div>
+          <div style="font-weight:700;">Exercice 1</div>
+          <div style="font-size:12px; color:#5a7aaa; margin-top:2px;">Avoir mal — au / à la / aux</div>
+        </div>
+      </div>
+      <div class="section-item">
+        <div class="section-icon icon-green">⚽</div>
+        <div>
+          <div style="font-weight:700;">Exercice 2</div>
+          <div style="font-size:12px; color:#5a7aaa; margin-top:2px;">Faire du sport — du / de la / de l'</div>
+        </div>
+      </div>
+      <button class="start-btn" onclick="startGame()">▶ Commencer le jeu</button>
+    </div>
+    <div class="footer-note">Partage ce fichier sur WhatsApp avec tes élèves 📲</div>
+  </div>
+
+  <!-- GAME SCREEN -->
+  <div class="screen" id="game-screen">
+    <div class="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill" id="prog" style="width:10%"></div></div>
+      <div class="q-count" id="q-count">1 / 10</div>
+    </div>
+    <div class="card">
+      <div class="theme-badge" id="theme-badge">Avoir mal</div>
+      <div class="question-text" id="q-text"></div>
+      <div class="options" id="options"></div>
+      <div class="feedback" id="feedback"></div>
+      <button class="next-btn" id="next-btn" onclick="nextQuestion()">Question suivante →</button>
+    </div>
+  </div>
+
+  <!-- RESULT SCREEN -->
+  <div class="screen" id="result-screen">
+    <div class="card">
+      <div class="result-header">
+        <div class="result-emoji" id="res-emoji">🏆</div>
+        <div class="result-title" id="res-title">Bravo !</div>
+      </div>
+      <div class="score-wrap">
+        <div class="score-big" id="res-score">0</div>
+        <div class="score-total">/ 10</div>
+      </div>
+      <div class="result-msg" id="res-msg"></div>
+      <div class="review-title">Détail des réponses</div>
+      <div id="review-list"></div>
+      <button class="restart-btn" onclick="restartGame()">🔄 Rejouer</button>
+    </div>
+    <div class="footer-note">École Anass Ibn Malik • Académie Al-Aaiún</div>
+  </div>
+
+</div>
+
+<script>
+const questions = [
+  { q:"Vous _____ aux yeux.",            answer:"avez mal",  options:["avez mal","as mal","avons mal","ont mal"],   theme:"🤕 Avoir mal" },
+  { q:"Tu _____ à la tête.",             answer:"as mal",    options:["ai mal","as mal","a mal","avons mal"],        theme:"🤕 Avoir mal" },
+  { q:"Nous _____ au ventre.",           answer:"avons mal", options:["ont mal","avez mal","avons mal","ai mal"],    theme:"🤕 Avoir mal" },
+  { q:"Elles _____ aux oreilles.",       answer:"ont mal",   options:["avez mal","ont mal","a mal","as mal"],        theme:"🤕 Avoir mal" },
+  { q:"J'ai mal _____ pied.",            answer:"au",        options:["au","à la","aux","de la"],                    theme:"🤕 Avoir mal" },
+  { q:"Siham a mal _____ main.",         answer:"à la",      options:["au","aux","à la","de l'"],                   theme:"🤕 Avoir mal" },
+  { q:"Karim fait _____ judo.",          answer:"du",        options:["du","de la","de l'","des"],                  theme:"⚽ Faire du sport" },
+  { q:"Amina fait _____ course à pied.", answer:"de la",     options:["du","de l'","de la","des"],                  theme:"⚽ Faire du sport" },
+  { q:"Siham fait _____ équitation.",    answer:"de l'",     options:["du","de la","de l'","des"],                  theme:"⚽ Faire du sport" },
+  { q:"Vous _____ du football.",         answer:"faites",    options:["font","faites","fais","faisons"],             theme:"⚽ Faire du sport" }
+];
+
+let current=0, score=0, answered=false, results=[];
+
+function shuffle(a){ return a.slice().sort(()=>Math.random()-0.5); }
+
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function startGame(){
+  current=0; score=0; answered=false; results=[];
+  show('game-screen');
+  renderQ();
+}
+
+function renderQ(){
+  const q=questions[current];
+  document.getElementById('q-count').textContent=`${current+1} / ${questions.length}`;
+  document.getElementById('prog').style.width=`${((current+1)/questions.length)*100}%`;
+  document.getElementById('theme-badge').textContent=q.theme;
+
+  document.getElementById('q-text').innerHTML=
+    q.q.replace('_____','<span class="blank">?</span>');
+
+  const opts=shuffle(q.options);
+  const div=document.getElementById('options');
+  div.innerHTML='';
+  opts.forEach(o=>{
+    const btn=document.createElement('button');
+    btn.className='opt-btn';
+    btn.textContent=o;
+    btn.onclick=()=>checkAnswer(o,btn);
+    div.appendChild(btn);
+  });
+
+  const fb=document.getElementById('feedback');
+  fb.className='feedback';
+  fb.textContent='';
+  const nb=document.getElementById('next-btn');
+  nb.style.display='none';
+  answered=false;
+}
+
+function checkAnswer(choice,btn){
+  if(answered)return;
+  answered=true;
+  const q=questions[current];
+  const btns=document.querySelectorAll('.opt-btn');
+  btns.forEach(b=>{ b.disabled=true; if(b.textContent===q.answer) b.classList.add('correct'); });
+
+  const fb=document.getElementById('feedback');
+  if(choice===q.answer){
+    score++;
+    btn.classList.add('correct');
+    fb.className='feedback ok';
+    fb.textContent='✓ Très bien ! Bonne réponse !';
+    results.push({q:q.q, ok:true});
+  } else {
+    btn.classList.add('wrong');
+    fb.className='feedback ko';
+    fb.textContent=`✗ La bonne réponse est : « ${q.answer} »`;
+    results.push({q:q.q, ok:false});
+  }
+
+  const nb=document.getElementById('next-btn');
+  nb.style.display='block';
+  nb.textContent = current===questions.length-1 ? 'Voir mon résultat 🏆' : 'Question suivante →';
+}
+
+function nextQuestion(){
+  current++;
+  if(current>=questions.length) showResult();
+  else renderQ();
+}
+
+function showResult(){
+  show('result-screen');
+  document.getElementById('res-score').textContent=score;
+
+  let emoji,title,msg;
+  if(score>=9){emoji='🏆';title='Excellent !';msg='Tu as tout juste ! Félicitations !';}
+  else if(score>=7){emoji='🌟';title='Très bien !';msg='Super travail, continue comme ça !';}
+  else if(score>=5){emoji='👍';title='Bien !';msg='Tu progresses ! Encore un peu d\'entraînement.';}
+  else {emoji='💪';title='Continue !';msg='Relis les exercices et réessaie. Tu vas y arriver !';}
+
+  document.getElementById('res-emoji').textContent=emoji;
+  document.getElementById('res-title').textContent=title;
+  document.getElementById('res-msg').textContent=msg;
+
+  const list=document.getElementById('review-list');
+  list.innerHTML=results.map((r,i)=>`
+    <div class="review-item">
+      <div class="review-dot ${r.ok?'dot-ok':'dot-ko'}">${r.ok?'✓':'✗'}</div>
+      <span>Q${i+1} — ${r.ok?'Correct':'Incorrect'}</span>
+    </div>`).join('');
+}
+
+function restartGame(){ startGame(); }
+</script>
+</body>
+</html>
